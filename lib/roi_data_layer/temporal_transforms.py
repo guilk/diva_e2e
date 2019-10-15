@@ -1,0 +1,122 @@
+import random
+import math
+
+
+class LoopPadding(object):
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, frame_indices):
+        out = frame_indices
+
+        for index in out:
+            if len(out) >= self.size:
+                break
+            out.append(index)
+
+        return out
+
+
+class TemporalBeginCrop(object):
+    """Temporally crop the given frame indices at a beginning.
+
+    If the number of frames is less than the size,
+    loop the indices as many times as necessary to satisfy the size.
+
+    Args:
+        size (int): Desired output size of the crop.
+    """
+
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, frame_indices):
+        out = frame_indices[:self.size]
+
+        for index in out:
+            if len(out) >= self.size:
+                break
+            out.append(index)
+
+        return out
+
+
+class TemporalCenterCrop(object):
+    """Temporally crop the given frame indices at a center.
+
+    If the number of frames is less than the size,
+    loop the indices as many times as necessary to satisfy the size.
+
+    Args:
+        size (int): Desired output size of the crop.
+    """
+
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, frame_indices):
+        """
+        Args:
+            frame_indices (list): frame indices to be cropped.
+        Returns:
+            list: Cropped frame indices.
+        """
+
+        center_index = len(frame_indices) // 2
+        begin_index = max(0, center_index - (self.size // 2))
+        end_index = min(begin_index + self.size, len(frame_indices))
+
+        out = frame_indices[begin_index:end_index]
+
+        for index in out:
+            if len(out) >= self.size:
+                break
+            out.append(index)
+
+        return out
+
+
+class TemporalRandomCrop(object):
+    """Temporally crop the given frame indices at a random location.
+
+    If the number of frames is less than the size,
+    loop the indices as many times as necessary to satisfy the size.
+
+    Args:
+        size (int): Desired output size of the crop.
+    """
+
+    def __init__(self, size, is_test=False):
+        self.size = size
+        self.p = random.random()
+        self.is_test = is_test
+
+    def __call__(self, frame_indices):
+        """
+        Args:
+            frame_indices (list): frame indices to be cropped.
+        Returns:
+            list: Cropped frame indices.
+        """
+        rand_step = 1
+        '''
+        if not self.is_test:
+            if self.p > 0.8:
+                rand_step = 2
+        '''
+
+        rand_end = max(0, len(frame_indices) - rand_step * self.size - 1)
+        begin_index = random.randint(0, rand_end)
+        end_index = min(begin_index + rand_step * self.size, len(frame_indices))
+
+        out = frame_indices[begin_index:end_index:rand_step]
+
+        for index in out:
+            if len(out) >= self.size:
+                break
+            out.append(index)
+
+        return out
+
+    def randomize_parameters(self):
+        self.p = random.random()
